@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreetGuide AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+
+
+<body>
+
+    <!-- ================= NAVBAR ================= -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+
+            🚏 <span>StreetGuide AI</span>
+
+        </div>
+
+        <div class="nav-links">
+
+            <a href="#">About</a>
+
+            <a href="#">Documentation</a>
+
+            <a href="#">GitHub</a>
+
+        </div>
+
+    </nav>
+
+    <!-- ================= DASHBOARD ================= -->
+
+    <div class="dashboard">
+
+        <!-- LEFT PANEL -->
+
+        <div class="left-panel">
+
+            <div class="card">
+
+                <h2>📤 Upload Street Image</h2>
+
+                <label class="drop-zone" id="dropZone">
+
+                    <span class="drop-text">
+
+                        📁 Drag & Drop Image
+
+                        <br><br>
+
+                        <strong>OR</strong>
+
+                        <br><br>
+
+                        Click to Browse
+
+                    </span>
+
+                    <input
+                        type="file"
+                        id="imageInput"
+                        accept="image/*"
+                        hidden>
+
+                </label>
+
+                <img id="previewImage">
+
+                <div class="image-info">
+
+                    <p id="fileName">No image selected</p>
+
+                    <p id="fileSize"></p>
+
+                    <p id="fileResolution"></p>
+
+                </div>
+
+                <div class="language-group">
+
+                    <label>Source Language</label>
+
+                    <select id="sourceLanguage">
+
+                        <option>Tamil</option>
+                        <option>Hindi</option>
+                        <option>Kannada</option>
+                        <option>Malayalam</option>
+                        <option>Telugu</option>
+
+                    </select>
+
+                </div>
+
+                <div class="language-group">
+
+                    <label>Target Language</label>
+
+                    <select id="targetLanguage">
+
+                        <option selected>English</option>
+
+                    </select>
+
+                </div>
+
+                <button id="translateBtn">
+
+                    🚀 Translate
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL -->
+
+        <div class="right-panel">
+
+            <div class="card">
+
+                <h2>🤖 AI Processing</h2>
+
+                <div class="agent-card">
+
+                    <span>👁 Vision Agent</span>
+
+                    <span id="visionStatus" class="status waiting">
+
+                        Waiting
+
+                    </span>
+
+                </div>
+
+                <div class="agent-card">
+
+                    <span>📝 Text Processing Agent</span>
+
+                    <span id="textStatus" class="status waiting">
+
+                        Waiting
+
+                    </span>
+
+                </div>
+
+                <div class="agent-card">
+
+                    <span>🧭 Navigation Agent</span>
+
+                    <span id="navigationStatus" class="status waiting">
+
+                        Waiting
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="card result-card">
+
+                <h2>📝 OCR Text</h2>
+
+                <div id="ocrOutput">
+
+                    Waiting for processing...
+
+                </div>
+
+            </div>
+
+            <div class="card result-card">
+
+                <h2>🌍 Transliterated Text</h2>
+
+                <div id="translatedOutput">
+
+                    Waiting for processing...
+
+                </div>
+
+            </div>
+
+            <div class="card result-card">
+
+                <h2>🧭 Navigation Guidance</h2>
+
+                <div id="navigationOutput">
+
+                    Waiting for processing...
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+<script type="module" src="script.js"></script>
+
+</body>
+
+
+</html>
