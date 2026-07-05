@@ -1,12 +1,22 @@
-from typing import Dict
+import json
 import re
+from typing import Dict, Union
 
 
-def classify_navigation(input_data: Dict):
+def classify_navigation(input_data: Union[str, Dict]):
     """
-    Receives the JSON output from Text Processing Agent.
+    Classifies transliterated street sign text into navigation categories.
 
-    Expected input:
+    Supports two input formats.
+
+    Format 1 (Current):
+
+    {
+        "language": "Tamil",
+        "transliterated_text": "Chennai\nManagaratchi"
+    }
+
+    Format 2 (Future):
 
     {
         "success": true,
@@ -14,81 +24,155 @@ def classify_navigation(input_data: Dict):
             {
                 "line_number": 1,
                 "original_text": "சென்னை",
-                "language": "Tamil",
-                "language_code": "ta",
-                "script": "Tamil",
                 "transliterated_text": "Chennai"
             }
         ]
     }
     """
 
-    items = input_data.get("items", [])
+    # --------------------------------------------------
+    # Convert JSON string to dictionary if needed
+    # --------------------------------------------------
+
+    if isinstance(input_data, str):
+        input_data = json.loads(input_data)
+
+    # --------------------------------------------------
+    # Build a common items list
+    # --------------------------------------------------
+
+    if "items" in input_data:
+
+        items = input_data["items"]
+
+    else:
+
+        items = [{
+            "line_number": 1,
+            "original_text": "",
+            "transliterated_text": input_data.get(
+                "transliterated_text",
+                ""
+            )
+        }]
 
     results = []
+
+    # --------------------------------------------------
+    # Classification
+    # --------------------------------------------------
 
     for item in items:
 
         original = item.get("original_text", "")
-        transliterated = item.get("transliterated_text", "")
-        line_no = item.get("line_number", 0)
 
-        # Use transliterated text for classification
+        transliterated = item.get(
+            "transliterated_text",
+            ""
+        )
+
+        line_no = item.get("line_number", 1)
+
         text = transliterated.lower()
 
         category = "Other"
         interpretation = ""
 
-        # ---------------------------
-        # HIGHWAY
-        # ---------------------------
+        # Highway
+
         if "nh" in text or "highway" in text:
+
             category = "Highway"
+
             interpretation = "National Highway reference"
 
-        # ---------------------------
-        # DISTANCE
-        # Detect:
-        # 5 km
-        # 500 m
-        # 12.5 km
-        # ---------------------------
-        elif re.search(r"\b\d+(\.\d+)?\s*(km|m)\b", text):
+        # Distance
+
+        elif re.search(
+            r"\b\d+(\.\d+)?\s*(km|m)\b",
+            text,
+        ):
+
             category = "Distance"
+
             interpretation = "Distance indicator"
 
-        # ---------------------------
-        # DIRECTION
-        # ---------------------------
-        elif any(word in text for word in [
-            "left",
-            "right",
-            "straight",
-            "turn",
-            "u-turn"
-        ]):
+        # Direction
+
+        elif any(
+
+            word in text
+
+            for word in [
+
+                "left",
+
+                "right",
+
+                "straight",
+
+                "turn",
+
+                "u-turn",
+
+                "north",
+
+                "south",
+
+                "east",
+
+                "west"
+
+            ]
+
+        ):
+
             category = "Direction"
+
             interpretation = "Directional instruction"
 
-        # ---------------------------
-        # TRAFFIC RULE
-        # ---------------------------
-        elif any(word in text for word in [
-            "stop",
-            "go",
-            "yield",
-            "no entry",
-            "speed limit"
-        ]):
+        # Traffic Rule
+
+        elif any(
+
+            word in text
+
+            for word in [
+
+                "stop",
+
+                "yield",
+
+                "go",
+
+                "no entry",
+
+                "speed limit",
+
+                "one way",
+
+                "give way"
+
+            ]
+
+        ):
+
             category = "Traffic Rule"
+
             interpretation = "Traffic regulation"
 
-        # ---------------------------
-        # PLACE NAME
-        # ---------------------------
-        elif transliterated.replace(" ", "").isalpha():
+        # Place Name
+
+        elif transliterated.replace(
+            " ",
+            ""
+        ).isalpha():
+
             category = "Place Name"
-            interpretation = "Geographic location or landmark"
+
+            interpretation = (
+                "Geographic location or landmark"
+            )
 
         results.append({
 
@@ -101,6 +185,7 @@ def classify_navigation(input_data: Dict):
             "category": category,
 
             "interpretation": interpretation
+
         })
 
     return {
@@ -111,5 +196,6 @@ def classify_navigation(input_data: Dict):
 
         "navigation_items": results,
 
-        "message": "Navigation analysis completed locally (no LLM used)."
+        "message": "Navigation analysis completed successfully."
+
     }

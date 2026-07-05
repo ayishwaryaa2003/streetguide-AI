@@ -1,30 +1,28 @@
-from dotenv import load_dotenv
-load_dotenv()
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 from app.routes import router
 
-app = FastAPI(
-    title="StreetGuide AI API",
-    version="1.0.0",
-    description="Backend API for StreetGuide AI"
-)
+app = FastAPI(title="StreetGuide AI")
 
-# Allow frontend requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # We'll tighten this later
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# API
 app.include_router(router)
 
+# Static frontend
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+
+
 @app.get("/")
-async def root():
-    return {
-        "message": "StreetGuide AI API is running 🚀"
-    }
+async def home():
+    return FileResponse("frontend/index.html")

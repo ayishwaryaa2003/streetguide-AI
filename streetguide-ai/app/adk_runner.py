@@ -5,19 +5,19 @@ This module is shared by:
 1. FastAPI backend
 2. Development console
 """
+
 from dotenv import load_dotenv
 load_dotenv()
 
-from pathlib import Path
 import mimetypes
 import uuid
+from pathlib import Path
 
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from agents import root_agent
-
 
 APP_NAME = "streetguide_ai"
 USER_ID = "developer"
@@ -35,7 +35,10 @@ class ADKRunner:
             session_service=self.session_service,
         )
 
-    async def load_session(self):
+    async def create_session(self) -> str:
+        """
+        Create a new ADK session.
+        """
 
         session_id = str(uuid.uuid4())
 
@@ -49,11 +52,14 @@ class ADKRunner:
 
     @staticmethod
     def load_image_part(image_path: str) -> types.Part:
+        """
+        Load the uploaded image into a Gemini Part.
+        """
 
         path = Path(image_path)
 
         if not path.exists():
-            raise FileNotFoundError(image_path)
+            raise FileNotFoundError(f"Image not found: {image_path}")
 
         mime_type, _ = mimetypes.guess_type(path)
 
@@ -65,13 +71,27 @@ class ADKRunner:
             mime_type=mime_type,
         )
 
+    @staticmethod
+    def print_divider():
+        print("\n" + "=" * 70)
+
+    @staticmethod
+    def print_agent(author: str):
+        print("\n" + "-" * 70)
+        print(f"🤖 Agent : {author}")
+        print("-" * 70)
+
+    @staticmethod
+    def print_text(text: str):
+        print(text)
+
     async def run(
         self,
         image_path: str,
         user_prompt: str,
-    ) -> str:
+    ):
 
-        session_id = await self.load_session()
+        session_id = await self.create_session()
 
         prompt = f"""
 User Request:
@@ -81,39 +101,92 @@ Local Image Path:
 {image_path}
 """.strip()
 
-        parts = [
-            types.Part(text=prompt),
-            self.load_image_part(image_path),
-        ]
-
         content = types.Content(
             role="user",
-            parts=parts,
+            parts=[
+                types.Part(text=prompt),
+                self.load_image_part(image_path),
+            ],
         )
 
         final_response = ""
+        last_author = None
 
-        async for event in self.runner.run_async(
-            user_id=USER_ID,
-            session_id=session_id,
-            new_message=content,
-        ):
+        try:
 
-            if event.is_final_response():
+            self.print_divider()
+            print("🚀 StreetGuide AI Workflow Started")
+            self.print_divider()
+
+            async for event in self.runner.run_async(
+                user_id=USER_ID,
+                session_id=session_id,
+                new_message=content,
+            ):
+
+                author = getattr(event, "author", "Unknown")
+
+                # Print author only when it changes
+                if author != last_author:
+                    self.print_agent(author)
+                    last_author = author
 
                 if event.content and event.content.parts:
 
-                    part = event.content.parts[0]
+                    for part in event.content.parts:
 
-                    if part.text:
-                        final_response = part.text
+                        if getattr(part, "text", None):
+                            self.print_text(part.text)
 
-                    elif part.function_response:
-                        final_response = str(
-                            part.function_response.response
-                        )
+                        elif getattr(part, "function_call", None):
+                            print("🔧 Function Call:")
+                            print(part.function_call)
 
-        return final_response
+                        elif getattr(part, "function_response", None):
+                            print("✅ Function Response:")
+                            print(part.function_response.response)
+
+                if event.is_final_response():
+
+                    if event.content and event.content.parts:
+
+                        part = event.content.parts[0]
+
+                        if getattr(part, "text", None):
+                            final_response = part.text
+
+                        elif getattr(part, "function_response", None):
+                            final_response = str(
+                                part.function_response.response
+                            )
+
+            self.print_divider()
+            print("✅ Workflow Completed")
+            self.print_divider()
+
+            return {
+                "success": True,
+                "response": final_response,
+                "session_id": session_id,
+            }
+
+        except Exception as e:
+
+            self.print_divider()
+            print("❌ Workflow Failed")
+            self.print_divider()
+
+            print(type(e).__name__)
+            print(e)
+
+            import traceback
+            traceback.print_exc()
+
+            return {
+                "success": False,
+                "error": str(e),
+                "session_id": session_id,
+            }
 
 
 adk_runner = ADKRunner()

@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 
 from app.schemas import ProcessImageResponse
 from app.services import process_uploaded_image
+from uuid import uuid4
 
 router = APIRouter()
 
@@ -22,7 +23,8 @@ async def process_image(
     target_language: str = Form(...),
 ):
 
-    image_path = UPLOAD_DIR / image.filename
+    extension = Path(image.filename).suffix
+    image_path = UPLOAD_DIR / f"{uuid4()}{extension}"
 
     with image_path.open("wb") as buffer:
         shutil.copyfileobj(image.file, buffer)

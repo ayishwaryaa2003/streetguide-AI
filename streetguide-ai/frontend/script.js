@@ -130,13 +130,19 @@ translateBtn.addEventListener("click", async () => {
 
     resetUI();
 
+    translateBtn.disabled = true;
+    translateBtn.textContent = "⏳ Processing...";
+
     updateStatus(visionStatus, "processing");
     updateStatus(textStatus, "processing");
     updateStatus(navigationStatus, "processing");
 
     const formData = new FormData();
 
-    formData.append("image", imageInput.files[0]);
+    formData.append(
+        "image",
+        imageInput.files[0]
+    );
 
     formData.append(
         "source_language",
@@ -152,18 +158,61 @@ translateBtn.addEventListener("click", async () => {
 
         const result = await processImage(formData);
 
+        console.log("STEP 1");
+        console.log(result);
+
         updateStatus(visionStatus, "completed");
+        console.log("STEP 2");
+
         updateStatus(textStatus, "completed");
+        console.log("STEP 3");
+
         updateStatus(navigationStatus, "completed");
+        console.log("STEP 4");
 
         ocrOutput.textContent =
             result.ocr_text || "No OCR text";
+        console.log("STEP 5");
 
         translatedOutput.textContent =
             result.transliterated_text || "No transliteration";
+        console.log("STEP 6");
 
-        navigationOutput.textContent =
-            result.navigation || "No navigation guidance";
+        // -------------------------------
+        // Pretty Navigation Output
+        // -------------------------------
+
+        navigationOutput.innerHTML = "";
+
+        if (
+            result.navigation &&
+            result.navigation.navigation_items
+        ) {
+
+            result.navigation.navigation_items.forEach(item => {
+
+                navigationOutput.innerHTML += `
+
+                    <p><strong>Category:</strong> ${item.category}</p>
+
+                    <p><strong>Text:</strong><br>
+                    ${item.transliterated_text}</p>
+
+                    <p><strong>Meaning:</strong><br>
+                    ${item.interpretation}</p>
+
+                    <hr>
+
+                `;
+
+            });
+
+        } else {
+
+            navigationOutput.textContent =
+                "No navigation guidance";
+
+        }
 
     }
     catch (error) {
@@ -174,8 +223,19 @@ translateBtn.addEventListener("click", async () => {
         updateStatus(textStatus, "error");
         updateStatus(navigationStatus, "error");
 
+        ocrOutput.textContent = "";
+
+        translatedOutput.textContent = "";
+
         navigationOutput.textContent =
-            error.message;
+            "❌ " + error.message;
+
+    }
+    finally {
+
+        translateBtn.disabled = false;
+
+        translateBtn.textContent = "🚀 Translate";
 
     }
 
