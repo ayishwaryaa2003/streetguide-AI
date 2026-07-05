@@ -5,22 +5,25 @@ Parses the ADK workflow state into a frontend-friendly response.
 import json
 
 
+# app/parsers/workflow_parser.py
 def _parse_json(value):
-    """
-    Convert JSON string -> dict if required.
-    """
-
     if value is None:
         return {}
 
-    if isinstance(value, dict):
-        return value
-
     if isinstance(value, str):
         try:
-            return json.loads(value)
-        except Exception:
+            value = json.loads(value)
+        except Exception as e:
+            print(f"⚠️ JSON parse failed: {value[:200]!r} — {e}")
             return {}
+
+    if isinstance(value, dict):
+        if set(value.keys()) == {"result"} and isinstance(value["result"], str):
+            try:
+                return json.loads(value["result"])
+            except Exception:
+                return {}
+        return value
 
     return {}
 

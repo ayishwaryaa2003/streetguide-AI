@@ -12,22 +12,18 @@ export async function processImage(formData) {
 
     if (!response.ok) {
 
-        let errorMessage = "Unknown error";
+        const body = await response.text();
+
+        let errorMessage = body;
 
         try {
-
-            const error = await response.json();
-
+            const error = JSON.parse(body);
             errorMessage = error.detail || JSON.stringify(error);
-
         } catch {
-
-            errorMessage = await response.text();
-
+            // body wasn't JSON
         }
 
         throw new Error(errorMessage);
-
     }
 
     return await response.json();

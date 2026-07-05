@@ -1,5 +1,6 @@
 from google.adk.agents import Agent
 
+from agents.core.callbacks import capture_finish_task_output
 from agents.prompts import load_prompt
 from ..tools.navigation_tools import classify_navigation
 
@@ -28,28 +29,15 @@ from ..tools.navigation_tools import classify_navigation
 from google.adk.agents.llm_agent import Agent
 from google.genai.types import GenerateContentConfig
 
+# navigation_agent.py
 navigation_agent = Agent(
     name="navigation_agent",
-
     model="gemini-2.5-flash",
-
     description="Navigation classifier",
-
-    instruction="""
-You MUST call classify_navigation.
-
-Return exactly the tool response.
-
-Do not modify it.
-""",
-
+    instruction="""...""",
     tools=[classify_navigation],
-
     mode="task",
-
     output_key="navigation",
-
-    generate_content_config=GenerateContentConfig(
-        temperature=0,
-    ),
+    after_tool_callback=capture_finish_task_output("navigation"),
+    generate_content_config=GenerateContentConfig(temperature=0),
 )
